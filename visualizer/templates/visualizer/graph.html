@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Algorithm Visualizer — BFS &amp; DFS Step by Step</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{
+    --panel:rgba(30,30,60,.8);
+    --panel-2:rgba(40,40,80,.6);
+    --line:rgba(74,123,255,.45);
+    --accent:#4a7bff;
+    --accent-2:#00c9ff;
+    --node:#4a7bff;
+    --node-visited:#4ecdc4;
+    --node-frontier:#7209b7;
+    --node-current:#ffd166;
+    --text:#fff;
+    --muted:#a0d0ff;
+    --green:#06d6a0;
+    --red:#ff6b6b;
+    --gold:#ffd166;
+    --radius:15px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+
+  body{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    background:linear-gradient(135deg,#1a2a6c,#b21f1f,#1a2a6c);
+    background-attachment:fixed;
+    color:var(--text);
+    line-height:1.55;
+    padding:18px;
+    min-height:100vh;
+  }
+
+  .container{max-width:2000px;margin:0 auto;}
+
+  header{
+    text-align:center;
+    padding:20px;
+    margin-bottom:16px;
+    background:rgba(0,0,0,.3);
+    border-radius:var(--radius);
+    box-shadow:0 8px 32px rgba(0,0,0,.3);
+    backdrop-filter:blur(4px);
+  }
+  h1{
+    font-size:2.4rem;
+    letter-spacing:.4px;
+    background:linear-gradient(90deg,#00c9ff,#92fe9d);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+    display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
+  }
+  h1 i{-webkit-text-fill-color:#00c9ff;}
+  .subtitle{color:#e0e0e0;font-size:1.05rem;margin-top:6px;}
+  .subtitle b{color:#92fe9d;}
+
+  /* ---------------- Theory ---------------- */
+  .theory-card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    margin-bottom:16px;
+    box-shadow:0 8px 32px rgba(0,0,0,.3);
+    backdrop-filter:blur(4px);
+    overflow:hidden;
+  }
+  .theory-card summary{
+    cursor:pointer;
+    padding:14px 18px;
+    font-weight:700;
+    font-size:1.1rem;
+    color:#6ab7ff;
+    list-style:none;
+    display:flex;align-items:center;gap:10px;
+    user-select:none;
+  }
+  .theory-card summary::-webkit-details-marker{display:none;}
+  .theory-card summary::after{
+    content:'\f078';font-family:'Font Awesome 6 Free';font-weight:900;
+    margin-left:auto;font-size:.8rem;transition:transform .3s;color:var(--muted);
+  }
+  .theory-card[open] summary::after{transform:rotate(180deg);}
+  .theory-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:14px;
+    padding:4px 18px 18px;
+  }
+  .theory-col{
+    background:var(--panel-2);
+    border-left:4px solid var(--accent);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .theory-col h4{
+    color:var(--gold);font-size:1rem;margin-bottom:8px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .theory-col ul{padding-left:18px;font-size:.9rem;color:#e0e8ff;}
+  .theory-col li{margin-bottom:6px;}
+  .theory-col code{
+    background:rgba(74,123,255,.25);padding:1px 6px;border-radius:5px;
+    font-family:'Consolas',monospace;color:#92fe9d;font-size:.85em;
+  }
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.75rem;font-weight:700;}
+  .pill.bfs{background:rgba(78,205,196,.2);color:#4ecdc4;border:1px solid rgba(78,205,196,.5);}
+  .pill.dfs{background:rgba(114,9,183,.3);color:#d4a5ff;border:1px solid rgba(114,9,183,.7);}
+
+  /* ---------------- Main layout ---------------- */
+  .main-grid{
+    display:grid;
+    grid-template-columns:320px minmax(0,1fr) 420px;
+    gap:16px;
+    align-items:start;
+  }
+  @media (max-width:1500px){
+    .main-grid{grid-template-columns:300px minmax(0,1fr) 380px;}
+  }
+  @media (max-width:1200px){
+    .main-grid{grid-template-columns:1fr;}
+    .canvas-col,.right-col{grid-column:1 !important;}
+  }
+
+  .panel{
+    background:var(--panel);
+    border-radius:var(--radius);
+    padding:18px;
+    box-shadow:0 8px 32px rgba(0,0,0,.3);
+    backdrop-filter:blur(4px);
+  }
+  .canvas-col{grid-column:2;display:flex;flex-direction:column;gap:16px;min-width:0;}
+  .right-col{grid-column:3;display:flex;flex-direction:column;gap:16px;}
+
+  .panel-title{
+    font-size:1.25rem;color:#6ab7ff;margin-bottom:14px;
+    display:flex;align-items:center;gap:9px;
+    border-bottom:2px solid #4a7bff;padding-bottom:8px;
+  }
+  .panel-title i{color:var(--accent);}
+
+  /* ---------------- Controls ---------------- */
+  .field{margin-bottom:14px;}
+  .field label{
+    display:flex;align-items:center;gap:7px;
+    font-size:.88rem;font-weight:600;color:#a0d0ff;margin-bottom:6px;
+  }
+  input[type="text"]{
+    width:100%;padding:10px 12px;border-radius:8px;
+    border:2px solid #4a7bff;background:rgba(20,20,40,.8);
+    color:#fff;font-size:1rem;font-weight:600;letter-spacing:1px;
+  }
+  input[type="text"]:focus{outline:none;border-color:#00c9ff;box-shadow:0 0 8px rgba(0,201,255,.5);}
+
+  input[type="range"]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:6px;border-radius:99px;
+    background:linear-gradient(90deg,#4a7bff,#00c9ff);
+    outline:none;cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:17px;height:17px;border-radius:50%;
+    background:#fff;border:3px solid var(--accent);cursor:pointer;
+    box-shadow:0 2px 8px rgba(0,0,0,.5);
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:15px;height:15px;border-radius:50%;background:#fff;
+    border:3px solid var(--accent);cursor:pointer;
+  }
+  .slider-row{display:flex;align-items:center;gap:10px;}
+  .slider-val{min-width:62px;text-align:right;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 14px;border:none;border-radius:8px;
+    font-size:.92rem;font-weight:600;color:#fff;cursor:pointer;
+    transition:all .25s ease;
+    box-shadow:0 4px 6px rgba(0,0,0,.3);
+    font-family:inherit;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.3);}
+  .btn:active{transform:translateY(0);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+  .btn-bfs{background:linear-gradient(90deg,#4a7bff,#6ab7ff);}
+  .btn-dfs{background:linear-gradient(90deg,#7209b7,#560bad);}
+  .btn-play{background:linear-gradient(90deg,#4a7bff,#6ab7ff);flex:1;}
+  .btn-ghost{background:rgba(74,123,255,.3);border:1px solid #4a7bff;}
+  .btn-danger{background:linear-gradient(90deg,#ff416c,#ff4b2b);}
+  .btn-warn{background:linear-gradient(90deg,#ff9a00,#ff5e00);}
+  .btn-row{display:flex;gap:10px;margin-bottom:10px;}
+  .btn-row .btn{flex:1;}
+  .btn-col{display:flex;flex-direction:column;gap:10px;}
+
+  .hint-list{
+    margin-top:14px;background:var(--panel-2);
+    border-left:4px solid var(--accent);border-radius:10px;
+    padding:12px 14px;font-size:.84rem;color:#dbe6ff;
+  }
+  .hint-list h4{color:#92fe9d;font-size:.9rem;margin-bottom:7px;display:flex;gap:7px;align-items:center;}
+  .hint-list ul{padding-left:16px;}
+  .hint-list li{margin-bottom:5px;}
+  kbd{
+    background:rgba(74,123,255,.3);border:1px solid #4a7bff;
+    border-radius:5px;padding:0 5px;font-size:.78rem;font-family:monospace;color:#fff;
+  }
+
+  /* ---------------- Graph panel ---------------- */
+  .graph-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:14px;flex-wrap:wrap;margin-bottom:12px;
+  }
+
+  .zoom-controls{
+    display:flex;align-items:center;gap:6px;
+    background:rgba(20,20,40,.7);
+    border:1px solid var(--line);
+    border-radius:10px;padding:4px 6px;
+  }
+  .zoom-btn{
+    width:30px;height:30px;
+    border-radius:8px;border:none;
+    background:rgba(74,123,255,.3);
+    color:#e0eaff;cursor:pointer;
+    font-size:.82rem;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s;
+  }
+  .zoom-btn:hover{background:rgba(74,123,255,.6);color:#fff;}
+  .zoom-btn:active{background:rgba(74,123,255,.9);}
+  .zoom-display{
+    min-width:52px;text-align:center;
+    font-size:.8rem;font-weight:800;
+    color:#92fe9d;font-variant-numeric:tabular-nums;
+    padding:0 4px;
+  }
+
+  .canvas-size-row{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+    padding:10px 12px;
+    margin-bottom:12px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+  }
+  @media (max-width:700px){
+    .canvas-size-row{grid-template-columns:1fr;}
+  }
+  .size-control{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .size-control label{
+    font-size:.74rem;color:#a0d0ff;font-weight:700;
+    display:flex;align-items:center;gap:5px;
+    text-transform:uppercase;letter-spacing:.5px;
+  }
+  .size-control label i{color:var(--accent-2);}
+  .size-control .slider-row{display:flex;align-items:center;gap:8px;}
+  .size-control input[type="range"]{flex:1;min-width:0;}
+
+  .mode-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .mode-btn{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:8px 13px;border-radius:8px;font-size:.84rem;font-weight:600;
+    background:rgba(74,123,255,.2);color:#e0eaff;
+    border:1px solid #4a7bff;cursor:pointer;
+    transition:all .2s;font-family:inherit;
+  }
+  .mode-btn:hover{background:rgba(74,123,255,.45);color:#fff;}
+  .mode-btn.active{
+    background:linear-gradient(90deg,#4a7bff,#6ab7ff);
+    color:#fff;border-color:transparent;
+    box-shadow:0 5px 14px rgba(74,123,255,.5);
+  }
+
+  .canvas-wrapper{position:relative;}
+
+  .canvas-scroll{
+    overflow:auto;
+    border-radius:10px;
+    border:2px solid #4a7bff;
+    background:#0f1425;
+    box-shadow:0 4px 15px rgba(0,0,0,.5);
+    max-height:62vh;
+    position:relative;
+    touch-action: pan-x pan-y;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  .canvas-scroll.pan-mode{cursor:grab;}
+  .canvas-scroll.panning{cursor:grabbing !important;}
+  .canvas-scroll.space-ready{cursor:grab;}
+  .canvas-scroll.pannable{cursor:grab;}
+  .canvas-scroll.pannable.panning{cursor:grabbing !important;}
+
+  #graphCanvas{display:block;user-select:none;}
+
+  .resize-handle{
+    position:absolute;
+    z-index:30;
+    touch-action:none;
+  }
+  .rh-right{
+    top:12px; bottom:12px; right:-5px;
+    width:10px;
+    border-radius:5px;
+    background:linear-gradient(180deg,rgba(74,123,255,.45),rgba(0,201,255,.45));
+    cursor:ew-resize;
+    transition:background .15s, transform .15s;
+  }
+  .rh-right:hover{
+    background:linear-gradient(180deg,#4a7bff,#00c9ff);
+    transform:scaleX(1.15);
+  }
+
+  .rh-bottom{
+    left:12px; right:12px; bottom:-5px;
+    height:10px;
+    border-radius:5px;
+    background:linear-gradient(90deg,rgba(74,123,255,.45),rgba(0,201,255,.45));
+    cursor:ns-resize;
+    transition:background .15s, transform .15s;
+  }
+  .rh-bottom:hover{
+    background:linear-gradient(90deg,#4a7bff,#00c9ff);
+    transform:scaleY(1.15);
+  }
+
+  .rh-corner{
+    right:-8px; bottom:-8px;
+    width:24px; height:24px;
+    border-radius:7px;
+    background:linear-gradient(135deg,#4a7bff,#00c9ff);
+    border:2px solid #fff;
+    box-shadow:0 3px 10px rgba(0,0,0,.5);
+    cursor:nwse-resize;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:10px;
+    transition:transform .15s, filter .15s;
+  }
+  .rh-corner:hover{
+    transform:scale(1.12);
+    filter:brightness(1.15);
+  }
+  .rh-corner:active{transform:scale(1.05);}
+
+  body.resizing{cursor:nwse-resize !important; user-select:none;}
+  body.resizing *{cursor:inherit !important;}
+
+  .legend{
+    display:flex;gap:14px;flex-wrap:wrap;
+    margin-top:10px;font-size:.78rem;color:var(--muted);
+  }
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+
+  .hint-bar{
+    margin-top:10px;padding:9px 13px;border-radius:8px;
+    background:rgba(0,201,255,.1);border:1px dashed rgba(0,201,255,.45);
+    font-size:.82rem;color:#a0e4ff;
+  }
+
+  /* SVG */
+  .node{transition:fill .25s ease;cursor:grab;}
+  .node:hover{filter:brightness(1.25);}
+  .node:active{cursor:grabbing;}
+  .node.selected{stroke:#fff !important;stroke-width:3.5 !important;}
+  .node.current{animation:pulseNode 1.1s ease-in-out infinite;}
+  .edge-hit{stroke:transparent;stroke-width:18;cursor:pointer;fill:none;}
+  .edge-hit:hover + .edge-line{stroke:#ff6b6b !important;stroke-width:3.5 !important;}
+  .edge-line{pointer-events:none;transition:stroke .2s;}
+  .edge-line.tree{stroke:var(--gold) !important;stroke-width:3.5;filter:drop-shadow(0 0 5px rgba(255,209,102,.6));}
+  .edge-line.selected{stroke:#ff6b6b !important;stroke-width:3.5;}
+  .preview-line{stroke:#ff6b6b;stroke-width:2.5;stroke-dasharray:7 6;pointer-events:none;}
+  @keyframes pulseNode{
+    0%,100%{filter:drop-shadow(0 0 4px rgba(255,209,102,.6));}
+    50%{filter:drop-shadow(0 0 16px rgba(255,183,3,1));}
+  }
+
+  /* ---------------- Log ---------------- */
+  .log-panel{padding:16px 18px;}
+  .log-output{
+    max-height:190px;overflow-y:auto;
+    font-family:'Consolas','SF Mono',monospace;font-size:.84rem;
+    background:rgba(20,20,40,.6);border:1px solid #4a7bff;
+    border-radius:8px;padding:10px;
+  }
+  .log-entry{
+    padding:7px 10px;margin-bottom:6px;border-radius:6px;
+    background:rgba(40,40,80,.6);border-left:3px solid #4a7bff;
+    animation:slideIn .3s ease;color:#e0e8ff;
+  }
+  .log-entry .log-num{
+    display:inline-block;min-width:20px;font-weight:800;color:#6ab7ff;
+  }
+  .log-entry b{color:#fff;}
+  .log-entry.pop{border-left-color:var(--red);background:rgba(255,107,107,.15);}
+  .log-entry.push{border-left-color:var(--green);background:rgba(6,214,160,.15);}
+  .log-entry.init{border-left-color:var(--accent-2);background:rgba(0,201,255,.15);}
+  .log-entry.done{border-left-color:var(--gold);background:rgba(255,209,102,.18);}
+  .log-entry.error{border-left-color:var(--red);background:rgba(255,107,107,.25);color:#ffd0d0;}
+  .log-entry.edit{border-left-color:#7c8bb5;}
+  @keyframes slideIn{from{opacity:0;transform:translateX(-14px);}to{opacity:1;transform:translateX(0);}}
+
+  /* ---------------- Explanation ---------------- */
+  .explain-panel{position:relative;overflow:hidden;}
+  .explain-top{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
+  .step-badge{
+    background:rgba(74,123,255,.3);border:1px solid #4a7bff;
+    padding:4px 11px;border-radius:99px;font-size:.78rem;font-weight:700;color:#fff;
+  }
+  .algo-badge{
+    padding:4px 12px;border-radius:99px;font-size:.78rem;font-weight:800;letter-spacing:.6px;
+    background:rgba(160,208,255,.15);color:#c9dcf5;border:1px solid rgba(160,208,255,.35);
+  }
+  .algo-badge.bfs{background:rgba(78,205,196,.2);color:#4ecdc4;border-color:rgba(78,205,196,.6);}
+  .algo-badge.dfs{background:rgba(114,9,183,.3);color:#d4a5ff;border-color:rgba(114,9,183,.8);}
+
+  .step-title{
+    font-size:1.1rem;font-weight:800;color:#fff;
+    margin-bottom:10px;line-height:1.35;
+  }
+  .step-lines{list-style:none;padding:0;}
+  .step-lines li{
+    position:relative;padding-left:20px;margin-bottom:8px;
+    font-size:.88rem;color:#e0e8ff;
+  }
+  .step-lines li::before{
+    content:'\f0da';font-family:'Font Awesome 6 Free';font-weight:900;
+    position:absolute;left:2px;top:1px;color:var(--accent-2);font-size:.72rem;
+  }
+  .step-lines b{color:#ffd166;}
+
+  .chips-label{font-size:.74rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:12px 0 6px;font-weight:700;}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-height:26px;}
+  .chip{
+    background:linear-gradient(90deg,#4ecdc4,#00c9ff);
+    color:#04202a;font-weight:800;font-size:.78rem;
+    padding:3px 10px;border-radius:6px;
+    animation:pop .3s ease;
+  }
+  .chip-arrow{color:var(--muted);font-size:.7rem;}
+  .muted{color:var(--muted);font-size:.82rem;font-style:italic;}
+
+  .progress-track{height:5px;border-radius:99px;background:rgba(74,123,255,.2);margin-top:14px;overflow:hidden;}
+  .progress-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#4a7bff,#00c9ff);transition:width .3s ease;}
+
+  /* ---------------- DS panels ---------------- */
+  .ds-panel{opacity:.5;transition:opacity .35s, box-shadow .35s;}
+  .ds-panel.active{
+    opacity:1;
+    box-shadow:0 0 0 2px rgba(0,201,255,.55), 0 0 22px rgba(0,201,255,.25), 0 8px 32px rgba(0,0,0,.35);
+    animation:panelGlow .9s ease;
+  }
+  @keyframes panelGlow{
+    0%{box-shadow:0 0 0 0 rgba(0,201,255,.7), 0 8px 32px rgba(0,0,0,.35);}
+    100%{box-shadow:0 0 0 2px rgba(0,201,255,.55), 0 0 22px rgba(0,201,255,.25), 0 8px 32px rgba(0,0,0,.35);}
+  }
+  .ds-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:8px;margin-bottom:10px;
+  }
+  .ds-name{font-size:1rem;font-weight:800;display:flex;align-items:center;gap:8px;}
+  .ds-name.q{color:#4ecdc4;}
+  .ds-name.s{color:#d4a5ff;}
+  .ds-tag{font-size:.7rem;color:var(--muted);font-weight:600;letter-spacing:.5px;}
+
+  .ds-op{
+    min-height:24px;font-size:.8rem;font-weight:800;letter-spacing:.4px;
+    display:flex;align-items:center;gap:7px;margin-bottom:8px;
+  }
+  .ds-op.in{color:#06d6a0;animation:pop .35s ease;}
+  .ds-op.out{color:#ff8a8a;animation:pop .35s ease;}
+  @keyframes pop{0%{transform:scale(.85);opacity:0;}100%{transform:scale(1);opacity:1;}}
+
+  .q-track{
+    position:relative;display:flex;align-items:center;gap:8px;
+    min-height:62px;padding:9px 40px 9px 34px;
+    border-radius:8px;border:2px dashed #4a7bff;
+    background:rgba(20,20,40,.6);
+    overflow-x:auto;overflow-y:hidden;
+  }
+  .q-arrow{
+    position:absolute;top:50%;transform:translateY(-50%);
+    font-size:.62rem;font-weight:900;letter-spacing:.5px;color:#6ab7ff;
+    writing-mode:vertical-rl;text-orientation:mixed;
+  }
+  .q-arrow.in{right:8px;}
+  .q-arrow.out{left:8px;transform:translateY(-50%) rotate(180deg);}
+
+  .s-track{
+    position:relative;display:flex;flex-direction:column;align-items:center;
+    gap:6px;min-height:110px;max-height:210px;overflow-y:auto;
+    padding:22px 12px 14px;
+    border-radius:8px;border:2px dashed #7209b7;
+    background:rgba(20,20,40,.6);
+  }
+  .s-track::after{
+    content:'';position:absolute;bottom:6px;left:12%;width:76%;height:6px;
+    background:#560bad;border-radius:4px;
+  }
+  .s-top-label{
+    position:absolute;top:4px;left:50%;transform:translateX(-50%);
+    font-size:.62rem;font-weight:900;letter-spacing:1px;color:#d4a5ff;
+  }
+
+  .ds-item{
+    flex:0 0 auto;
+    min-width:46px;padding:9px 14px;border-radius:6px;
+    font-weight:700;font-size:.92rem;text-align:center;
+    background:linear-gradient(90deg,#4ecdc4,#00c9ff);
+    color:#fff;box-shadow:0 4px 8px rgba(0,0,0,.3);
+    transition:all .25s ease;position:relative;
+  }
+  .ds-item .ord{
+    position:absolute;top:-6px;right:-6px;
+    font-size:.6rem;font-weight:800;
+    background:#0f1425;color:#92fe9d;
+    border:1px solid #4a7bff;
+    width:16px;height:16px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ds-item.entering{animation:itemIn .5s cubic-bezier(.2,1.4,.5,1);}
+  @keyframes itemIn{
+    0%{transform:scale(.5) translateY(-14px);opacity:0;}
+    100%{transform:scale(1) translateY(0);opacity:1;}
+  }
+  .q-track .ds-item.front{background:linear-gradient(90deg,#ffd166,#ffb703);color:#1a1205;border:2px solid #ffb703;}
+  .q-track .ds-item.rear{background:linear-gradient(90deg,#06d6a0,#06c895);border:2px solid #06c895;}
+  .q-track .ds-item.front.rear{background:linear-gradient(90deg,#ffd166,#ffb703);color:#1a1205;border:2px solid #ffb703;}
+  .s-track .ds-item{width:74%;background:linear-gradient(90deg,#7209b7,#560bad);}
+  .s-track .ds-item.top{background:linear-gradient(90deg,#ffd166,#ffb703);color:#1a1205;border:2px solid #ffb703;box-shadow:0 0 14px rgba(255,183,3,.5);}
+
+  .ds-empty{color:var(--muted);font-size:.82rem;font-style:italic;padding:6px 2px;}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);
+    background:rgba(20,20,40,.96);border:2px solid #4a7bff;
+    color:#fff;padding:11px 20px;border-radius:10px;
+    font-size:.86rem;font-weight:600;pointer-events:none;
+    opacity:0;transition:all .3s ease;z-index:999;
+    box-shadow:0 12px 32px rgba(0,0,0,.55);
+    max-width:90vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+
+  footer{
+    text-align:center;margin-top:22px;padding:18px;
+    color:#e0e0e0;font-size:.85rem;
+    background:rgba(0,0,0,.3);border-radius:var(--radius);
+  }
+
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:rgba(10,15,32,.6);border-radius:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(74,123,255,.5);border-radius:8px;}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(106,183,255,.8);}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1><i class="fas fa-project-diagram"></i> Graph Algorithm Visualizer</h1>
+    <p class="subtitle">Watch <b>BFS</b> and <b>DFS</b> run one step at a time — the <b>canvas</b>, the <b>queue/stack</b> and the explanation all update together.</p>
+  </header>
+
+  <!-- ================= THEORY ================= -->
+  <details class="theory-card" open>
+    <summary><i class="fas fa-book-open"></i> Prerequisites &amp; Theory — read this first (click to expand / collapse)</summary>
+    <div class="theory-grid">
+
+      <div class="theory-col">
+        <h4><i class="fas fa-shapes"></i> Prerequisites</h4>
+        <ul>
+          <li><b>Graph</b> — a set of <b>nodes</b> (vertices) connected by <b>edges</b>. Example: people and friendships.</li>
+          <li><b>Undirected edge</b> — travel both ways (A ↔ B). <b>Directed edge</b> — one way only (A → B).</li>
+          <li><b>Neighbours</b> — all nodes directly connected to a node.</li>
+          <li><b>Visited set</b> — a list of nodes we have already discovered. It stops us looping forever in a cycle.</li>
+          <li><b>Frontier</b> — the nodes discovered but not yet processed (they sit in the queue/stack).</li>
+          <li><b>Queue</b> = <code>FIFO</code> (First In, First Out). Add at the <b>REAR</b>, remove from the <b>FRONT</b>. Like a line at a shop.</li>
+          <li><b>Stack</b> = <code>LIFO</code> (Last In, First Out). Add and remove at the <b>TOP</b>. Like a pile of plates.</li>
+          <li><b>Traversal</b> — visiting every reachable node exactly once.</li>
+        </ul>
+      </div>
+
+      <div class="theory-col">
+        <h4><i class="fas fa-wave-square"></i> BFS <span class="pill bfs">Breadth-First Search</span></h4>
+        <ul>
+          <li><b>Data structure:</b> Queue (FIFO).</li>
+          <li><b>Idea:</b> Explore in <b>layers</b>. Visit everything 1 step away, then 2 steps away, then 3…</li>
+          <li><b>Algorithm:</b> enqueue the start → repeat: dequeue a node, mark it visited, enqueue all of its unvisited neighbours.</li>
+          <li><b>Why it works:</b> because a queue is FIFO, older (closer) nodes are always processed before newer (further) ones.</li>
+          <li><b>Guarantee:</b> finds the <b>shortest path</b> (fewest edges) in an unweighted graph.</li>
+          <li><b>Complexity:</b> O(V + E) time, O(V) space.</li>
+          <li><b>Used for:</b> shortest path, social-network "degrees of separation", web crawling, GPS on unweighted maps.</li>
+        </ul>
+      </div>
+
+      <div class="theory-col">
+        <h4><i class="fas fa-layer-group"></i> DFS <span class="pill dfs">Depth-First Search</span></h4>
+        <ul>
+          <li><b>Data structure:</b> Stack (LIFO) — or recursion, which uses the call stack.</li>
+          <li><b>Idea:</b> Go as <b>deep</b> as possible down one branch; when you hit a dead end, <b>backtrack</b> and try the next branch.</li>
+          <li><b>Algorithm:</b> push the start → repeat: pop a node, mark it visited, push all of its unvisited neighbours.</li>
+          <li><b>Why it works:</b> because a stack is LIFO, the most recently pushed neighbour is explored first, so we dive deeper.</li>
+          <li><b>Does NOT</b> guarantee the shortest path.</li>
+          <li><b>Complexity:</b> O(V + E) time, O(V) space.</li>
+          <li><b>Used for:</b> cycle detection, topological sorting, maze solving, connected components, backtracking puzzles.</li>
+        </ul>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main-grid">
+
+    <!-- ---------- LEFT: CONTROLS ---------- -->
+    <aside class="panel">
+      <h2 class="panel-title"><i class="fas fa-sliders-h"></i> Controls</h2>
+
+      <div class="field">
+        <label for="startNode"><i class="fas fa-play-circle"></i> Start node</label>
+        <input type="text" id="startNode" maxlength="6" placeholder="e.g. A" value="A">
+      </div>
+
+      <div class="field">
+        <label><i class="fas fa-tachometer-alt"></i> Animation speed</label>
+        <div class="slider-row">
+          <input type="range" id="speedControl" min="300" max="3000" step="100" value="1500">
+          <span class="slider-val" id="speedValue">1500ms</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-bfs" id="btnBFS" onclick="startTraversal('bfs')">
+          <i class="fas fa-wave-square"></i> Run BFS
+        </button>
+        <button class="btn btn-dfs" id="btnDFS" onclick="startTraversal('dfs')">
+          <i class="fas fa-layer-group"></i> Run DFS
+        </button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btnPrev" onclick="stepBack()" title="Previous step">
+          <i class="fas fa-backward-step"></i>
+        </button>
+        <button class="btn btn-play" id="btnPlay" onclick="togglePlay()">
+          <i class="fas fa-play"></i> Play
+        </button>
+        <button class="btn btn-ghost" id="btnNext" onclick="stepForward()" title="Next step">
+          <i class="fas fa-forward-step"></i>
+        </button>
+      </div>
+
+      <div class="btn-col">
+        <button class="btn btn-warn" onclick="toggleDirectedMode()">
+          <i class="fas fa-arrows-left-right"></i> Directed mode: <span id="directedModeStatus">OFF</span>
+        </button>
+        <button class="btn btn-danger" onclick="resetGraph()">
+          <i class="fas fa-redo"></i> Reset to default graph
+        </button>
+        <button class="btn btn-ghost" onclick="clearGraph()">
+          <i class="fas fa-broom"></i> Clear canvas (empty graph)
+        </button>
+      </div>
+
+      <div class="hint-list">
+        <h4><i class="fas fa-lightbulb"></i> Example structures</h4>
+        <div class="btn-row" style="flex-wrap:wrap;gap:8px;">
+          <button class="mode-btn" style="flex:1;justify-content:center" onclick="loadExample('binaryTree')">Binary Tree</button>
+          <button class="mode-btn" style="flex:1;justify-content:center" onclick="loadExample('directed')">Directed</button>
+        </div>
+        <div class="btn-row" style="flex-wrap:wrap;gap:8px;">
+          <button class="mode-btn" style="flex:1;justify-content:center" onclick="loadExample('dag')">DAG</button>
+          <button class="mode-btn" style="flex:1;justify-content:center" onclick="loadExample('multi')">Multi-Connection</button>
+        </div>
+      </div>
+
+      <div class="hint-list">
+        <h4><i class="fas fa-hand-pointer"></i> Canvas navigation</h4>
+        <ul>
+          <li><b>Drag empty space</b> (Select mode) → pan the graph</li>
+          <li><b>Drag blue grips</b> → resize canvas width / height</li>
+          <li><b>Drag a node right/bottom</b> → canvas auto-expands</li>
+          <li><b>Wheel</b> over the canvas → zoom in / out</li>
+          <li><b>Middle mouse drag</b> → pan instantly</li>
+          <li><b>Space + drag</b> → pan from any mode</li>
+        </ul>
+      </div>
+
+      <div class="hint-list">
+        <h4><i class="fas fa-keyboard"></i> Keyboard</h4>
+        <ul>
+          <li><kbd>Del</kbd> delete selected node / edge</li>
+          <li><kbd>Esc</kbd> cancel edge drawing / deselect</li>
+          <li><kbd>←</kbd> / <kbd>→</kbd> step back / forward</li>
+          <li><kbd>+</kbd> / <kbd>−</kbd> zoom in / out</li>
+          <li><kbd>0</kbd> fit graph to view</li>
+          <li><kbd>Shift</kbd> + drag = draw an edge</li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- ---------- CENTER: GRAPH + LOG ---------- -->
+    <section class="canvas-col">
+
+      <div class="panel">
+        <div class="graph-head">
+          <h2 class="panel-title" style="margin:0;border:none;padding:0;">
+            <i class="fas fa-chart-network"></i> Graph Canvas
+          </h2>
+          <div class="zoom-controls">
+            <button class="zoom-btn" onclick="zoomOut()" title="Zoom out (−)"><i class="fas fa-search-minus"></i></button>
+            <span class="zoom-display" id="zoomDisplay">100%</span>
+            <button class="zoom-btn" onclick="zoomIn()" title="Zoom in (+)"><i class="fas fa-search-plus"></i></button>
+            <button class="zoom-btn" onclick="fitToView()" title="Fit graph to view (0)"><i class="fas fa-expand"></i></button>
+            <button class="zoom-btn" onclick="resetView()" title="Reset zoom to 100%"><i class="fas fa-rotate-left"></i></button>
+          </div>
+        </div>
+
+        <!-- WIDTH / HEIGHT / ZOOM sliders -->
+        <div class="canvas-size-row">
+          <div class="size-control">
+            <label><i class="fas fa-arrows-left-right"></i> Width</label>
+            <div class="slider-row">
+              <input type="range" id="widthSlider" min="400" max="4000" step="50" value="900">
+              <span class="slider-val" id="widthValue">900px</span>
+            </div>
+          </div>
+          <div class="size-control">
+            <label><i class="fas fa-arrows-up-down"></i> Height</label>
+            <div class="slider-row">
+              <input type="range" id="heightSlider" min="300" max="3000" step="50" value="620">
+              <span class="slider-val" id="heightValue">620px</span>
+            </div>
+          </div>
+          <div class="size-control">
+            <label><i class="fas fa-magnifying-glass-plus"></i> Zoom</label>
+            <div class="slider-row">
+              <input type="range" id="zoomSlider" min="50" max="250" step="10" value="100">
+              <span class="slider-val" id="zoomValue">100%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mode-bar" id="modeBar">
+          <button class="mode-btn active" data-mode="select"><i class="fas fa-mouse-pointer"></i> Select / Move</button>
+          <button class="mode-btn" data-mode="addNode"><i class="fas fa-plus-circle"></i> Add Node</button>
+          <button class="mode-btn" data-mode="addEdge"><i class="fas fa-link"></i> Add Edge</button>
+          <button class="mode-btn" data-mode="delete"><i class="fas fa-trash"></i> Delete</button>
+          <button class="mode-btn" data-mode="pan"><i class="fas fa-hand"></i> Pan</button>
+        </div>
+
+        <!-- Canvas wrapper holds scroll area + resize handles -->
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <div class="canvas-scroll" id="canvasScroll">
+            <svg id="graphCanvas" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+          <div class="resize-handle rh-right" data-resize="w" title="Drag → change canvas width"></div>
+          <div class="resize-handle rh-bottom" data-resize="h" title="Drag ↓ change canvas height"></div>
+          <div class="resize-handle rh-corner" data-resize="both" title="Drag to resize canvas">
+            <i class="fas fa-up-right-and-down-left-from-center"></i>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span><i class="dot" style="background:#4a7bff"></i> Undiscovered</span>
+          <span><i class="dot" style="background:#7209b7"></i> Frontier (in queue/stack)</span>
+          <span><i class="dot" style="background:#4ecdc4"></i> Visited (processed)</span>
+          <span><i class="dot" style="background:#ffd166"></i> Current node</span>
+          <span><i class="dot" style="background:#ffd166;border-radius:2px;height:4px;width:16px"></i> Traversal tree edge</span>
+        </div>
+
+        <div class="hint-bar" id="hintBar"></div>
+      </div>
+
+      <div class="panel log-panel">
+        <h3 class="panel-title" style="font-size:1.1rem;"><i class="fas fa-list-check"></i> Step History</h3>
+        <div class="log-output" id="logOutput">
+          <div class="log-entry init"><span class="log-num">0</span> Ready — pick a start node and press <b>Run BFS</b> or <b>Run DFS</b>.</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ---------- RIGHT: EXPLANATION + QUEUE + STACK ---------- -->
+    <aside class="right-col">
+
+      <div class="panel explain-panel">
+        <div class="explain-top">
+          <span class="step-badge" id="stepBadge">Step 0 / 0</span>
+          <span class="algo-badge" id="algoBadge">—</span>
+        </div>
+        <div class="step-title" id="stepTitle">Ready</div>
+        <ul class="step-lines" id="stepLines">
+          <li>Choose a start node, then press <b>Run BFS</b> or <b>Run DFS</b>.</li>
+          <li>The matching data structure (queue for BFS, stack for DFS) will light up right below.</li>
+          <li>Use <b>Play / Prev / Next</b> to move through the algorithm at your own pace.</li>
+        </ul>
+
+        <div class="chips-label">Visited order</div>
+        <div class="chips" id="visitedChips"><span class="muted">none yet</span></div>
+
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+
+      <div class="panel ds-panel" id="queueBox">
+        <div class="ds-head">
+          <div class="ds-name q"><i class="fas fa-people-arrows"></i> Queue</div>
+          <div class="ds-tag">FIFO · used by BFS</div>
+        </div>
+        <div class="ds-op" id="queueOp"></div>
+        <div class="q-track">
+          <div class="q-arrow out">◀ OUT (front)</div>
+          <div class="q-arrow in">IN (rear) ▶</div>
+          <div id="queueOutput" style="display:flex;gap:8px;align-items:center;min-height:44px;"></div>
+        </div>
+      </div>
+
+      <div class="panel ds-panel" id="stackBox">
+        <div class="ds-head">
+          <div class="ds-name s"><i class="fas fa-layer-group"></i> Stack</div>
+          <div class="ds-tag">LIFO · used by DFS</div>
+        </div>
+        <div class="ds-op" id="stackOp"></div>
+        <div class="s-track">
+          <div class="s-top-label">▲ TOP ▲</div>
+          <div id="stackOutput" style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;"></div>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+
+  <footer>
+    <p>Graph Algorithm Visualizer · Interactive Computer-Science Education Tool</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   CONSTANTS & STATE
+   ========================================================================= */
+const NS = 'http://www.w3.org/2000/svg';
+const NODE_R = 24;
+
+let canvasW = 900;
+let canvasH = 620;
+let zoom = 1;
+
+const $ = id => document.getElementById(id);
+
+let edgeSeq = 1;
+const makeEdge = (source, target, directed = false) =>
+  ({ id: 'e' + (edgeSeq++), source, target, directed });
+
+const graph = { nodes: [], edges: [] };
+
+let mode = 'select';
+let directedMode = false;
+
+let selectedNodeId = null;
+let selectedEdgeId = null;
+let pendingEdgeFrom = null;
+
+let isDragging = false;
+let draggingNode = null;
+let dragOffset = { x: 0, y: 0 };
+let didDrag = false;
+
+let isDrawingEdge = false;
+let edgeDrawSource = null;
+let mousePos = null;
+let suppressClick = false;
+
+/* Panning */
+let isPanning = false;
+let panStart = { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 };
+let spaceDown = false;
+let suppressNextSvgClick = false;
+let panMoved = false;
+
+/* Canvas resize */
+let resizeState = null;
+
+/* Touch */
+let touchState = null;
+
+const viz = {
+  visited: new Set(),
+  frontier: new Set(),
+  current: null,
+  treeEdges: new Set()
+};
+
+const player = { steps: [], index: -1, playing: false, timer: null, type: null };
+
+const svg = $('graphCanvas');
+const canvasScroll = $('canvasScroll');
+
+/* =========================================================================
+   GRAPH SETUP / EXAMPLES
+   ========================================================================= */
+function loadDefaultGraph() {
+  edgeSeq = 1;
+  graph.nodes = [
+    { id: 'A', x: 450, y: 80 },
+    { id: 'B', x: 240, y: 210 },
+    { id: 'C', x: 660, y: 210 },
+    { id: 'D', x: 150, y: 360 },
+    { id: 'E', x: 450, y: 360 },
+    { id: 'F', x: 750, y: 360 }
+  ];
+  graph.edges = [
+    makeEdge('A', 'B'), makeEdge('A', 'C'),
+    makeEdge('B', 'D'), makeEdge('B', 'E'),
+    makeEdge('C', 'E'), makeEdge('C', 'F')
+  ];
+}
+
+function loadExample(type) {
+  clearTraversal();
+  directedMode = false;
+
+  if (type === 'binaryTree') {
+    graph.nodes = [
+      { id: 'A', x: 450, y: 60 },
+      { id: 'B', x: 260, y: 180 }, { id: 'C', x: 640, y: 180 },
+      { id: 'D', x: 160, y: 320 }, { id: 'E', x: 360, y: 320 },
+      { id: 'F', x: 540, y: 320 }, { id: 'G', x: 740, y: 320 }
+    ];
+    graph.edges = [
+      makeEdge('A', 'B'), makeEdge('A', 'C'),
+      makeEdge('B', 'D'), makeEdge('B', 'E'),
+      makeEdge('C', 'F'), makeEdge('C', 'G')
+    ];
+    addLog('Loaded example: Binary Tree (undirected)', 'edit');
+  }
+  else if (type === 'directed') {
+    directedMode = true;
+    graph.nodes = [
+      { id: 'A', x: 450, y: 70 },
+      { id: 'B', x: 230, y: 200 }, { id: 'C', x: 450, y: 200 }, { id: 'D', x: 670, y: 200 },
+      { id: 'E', x: 320, y: 350 }, { id: 'F', x: 580, y: 350 }
+    ];
+    graph.edges = [
+      makeEdge('A', 'B', true), makeEdge('A', 'C', true),
+      makeEdge('B', 'D', true), makeEdge('C', 'D', true),
+      makeEdge('C', 'E', true), makeEdge('D', 'F', true),
+      makeEdge('E', 'F', true)
+    ];
+    addLog('Loaded example: Directed Graph', 'edit');
+  }
+  else if (type === 'dag') {
+    directedMode = true;
+    graph.nodes = [
+      { id: 'A', x: 450, y: 55 },
+      { id: 'B', x: 210, y: 175 }, { id: 'C', x: 450, y: 175 }, { id: 'D', x: 690, y: 175 },
+      { id: 'E', x: 300, y: 320 }, { id: 'F', x: 600, y: 320 },
+      { id: 'G', x: 450, y: 450 }
+    ];
+    graph.edges = [
+      makeEdge('A', 'B', true), makeEdge('A', 'C', true), makeEdge('A', 'D', true),
+      makeEdge('B', 'E', true), makeEdge('C', 'E', true),
+      makeEdge('C', 'F', true), makeEdge('D', 'F', true),
+      makeEdge('E', 'G', true), makeEdge('F', 'G', true)
+    ];
+    addLog('Loaded example: Directed Acyclic Graph (DAG)', 'edit');
+  }
+  else if (type === 'multi' || type === 'dense') {
+    graph.nodes = [
+      { id: 'A', x: 450, y: 110 },
+      { id: 'B', x: 180, y: 110 }, { id: 'C', x: 720, y: 110 },
+      { id: 'D', x: 320, y: 360 }, { id: 'E', x: 580, y: 360 }
+    ];
+    graph.edges = [
+      makeEdge('A', 'B'), makeEdge('A', 'C'), makeEdge('A', 'D'), makeEdge('A', 'E'),
+      makeEdge('B', 'D'), makeEdge('B', 'E'),
+      makeEdge('C', 'D'), makeEdge('C', 'E'),
+      makeEdge('D', 'E')
+    ];
+    addLog('Loaded example: Multi-Connection Graph', 'edit');
+  }
+
+  $('directedModeStatus').textContent = directedMode ? 'ON' : 'OFF';
+  renderGraph();
+}
+
+function clearGraph() {
+  clearTraversal();
+  edgeSeq = 1;
+  graph.nodes = [];
+  graph.edges = [];
+  renderGraph();
+  addLog('Canvas cleared — use "Add Node" mode to build a graph', 'edit');
+}
+
+function resetGraph() {
+  clearTraversal();
+  loadDefaultGraph();
+  directedMode = false;
+  $('directedModeStatus').textContent = 'OFF';
+  $('startNode').value = 'A';
+  renderGraph();
+  addLog('Graph reset to the default example', 'edit');
+}
+
+/* =========================================================================
+   HELPERS
+   ========================================================================= */
+const getNode = id => graph.nodes.find(n => n.id === id);
+
+function nextNodeId() {
+  const used = new Set(graph.nodes.map(n => n.id));
+  for (let i = 0; i < 26; i++) {
+    const c = String.fromCharCode(65 + i);
+    if (!used.has(c)) return c;
+  }
+  let k = 1;
+  while (used.has('N' + k)) k++;
+  return 'N' + k;
+}
+
+function getNeighbors(id) {
+  const out = [];
+  graph.edges.forEach(e => {
+    if (e.source === id) out.push(e.target);
+    else if (!e.directed && e.target === id) out.push(e.source);
+  });
+  return out;
+}
+
+function findEdgeBetween(a, b) {
+  return graph.edges.find(e =>
+    (e.source === a && e.target === b) ||
+    (!e.directed && e.source === b && e.target === a)
+  );
+}
+
+function getPoint(ev) {
+  const r = svg.getBoundingClientRect();
+  return {
+    x: (ev.clientX - r.left) / r.width  * canvasW,
+    y: (ev.clientY - r.top)  / r.height * canvasH
+  };
+}
+
+function nodeAt(x, y) {
+  for (let i = graph.nodes.length - 1; i >= 0; i--) {
+    const n = graph.nodes[i];
+    if (Math.hypot(n.x - x, n.y - y) <= NODE_R + 4) return n;
+  }
+  return null;
+}
+
+/* Update the sliders + labels to match current canvas size */
+function updateSizeUI() {
+  const wSlider = $('widthSlider');
+  const hSlider = $('heightSlider');
+  if (canvasW > parseInt(wSlider.max)) wSlider.max = canvasW;
+  if (canvasH > parseInt(hSlider.max)) hSlider.max = canvasH;
+  wSlider.value = canvasW;
+  hSlider.value = canvasH;
+  $('widthValue').textContent = canvasW + 'px';
+  $('heightValue').textContent = canvasH + 'px';
+}
+
+/* Only clamp lower bound: allows unbounded growth on right/bottom */
+function clampNodes() {
+  graph.nodes.forEach(n => {
+    n.x = Math.max(NODE_R, n.x);
+    n.y = Math.max(NODE_R, n.y);
+  });
+}
+
+/* =========================================================================
+   RENDERING
+   ========================================================================= */
+function renderGraph() {
+  svg.setAttribute('viewBox', `0 0 ${canvasW} ${canvasH}`);
+  svg.setAttribute('width',  canvasW * zoom);
+  svg.setAttribute('height', canvasH * zoom);
+  svg.innerHTML = '';
+
+  const defs = document.createElementNS(NS, 'defs');
+  const mkMarker = (id, color) => {
+    const marker = document.createElementNS(NS, 'marker');
+    marker.setAttribute('id', id);
+    marker.setAttribute('markerWidth', '10');
+    marker.setAttribute('markerHeight', '7');
+    marker.setAttribute('refX', '9');
+    marker.setAttribute('refY', '3.5');
+    marker.setAttribute('orient', 'auto');
+    const poly = document.createElementNS(NS, 'polygon');
+    poly.setAttribute('points', '0 0, 10 3.5, 0 7');
+    poly.setAttribute('fill', color);
+    marker.appendChild(poly);
+    return marker;
+  };
+  defs.appendChild(mkMarker('arrowBlue', '#6ab7ff'));
+  defs.appendChild(mkMarker('arrowGold', '#ffd166'));
+  svg.appendChild(defs);
+
+  const bg = document.createElementNS(NS, 'rect');
+  bg.setAttribute('x', 0); bg.setAttribute('y', 0);
+  bg.setAttribute('width', canvasW); bg.setAttribute('height', canvasH);
+  bg.setAttribute('fill', 'transparent');
+  bg.setAttribute('pointer-events', 'all');
+  bg.dataset.bg = '1';
+  svg.appendChild(bg);
+
+  graph.edges.forEach(edge => {
+    const s = getNode(edge.source);
+    const t = getNode(edge.target);
+    if (!s || !t) return;
+
+    const dx = t.x - s.x, dy = t.y - s.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len;
+    const x1 = s.x + ux * NODE_R, y1 = s.y + uy * NODE_R;
+    const x2 = t.x - ux * (NODE_R + 9), y2 = t.y - uy * (NODE_R + 9);
+
+    const isTree = viz.treeEdges.has(edge.id);
+    const isSel = selectedEdgeId === edge.id;
+
+    const hit = document.createElementNS(NS, 'line');
+    hit.setAttribute('x1', x1); hit.setAttribute('y1', y1);
+    hit.setAttribute('x2', x2); hit.setAttribute('y2', y2);
+    hit.setAttribute('class', 'edge-hit');
+    hit.dataset.edgeId = edge.id;
+    svg.appendChild(hit);
+
+    const line = document.createElementNS(NS, 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('stroke', '#6ab7ff');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('class', 'edge-line' + (isTree ? ' tree' : '') + (isSel ? ' selected' : ''));
+    if (edge.directed) {
+      line.setAttribute('marker-end', isTree ? 'url(#arrowGold)' : 'url(#arrowBlue)');
+    }
+    svg.appendChild(line);
+  });
+
+  const previewSource = isDrawingEdge ? edgeDrawSource : (pendingEdgeFrom ? getNode(pendingEdgeFrom) : null);
+  if (previewSource && mousePos) {
+    const p = document.createElementNS(NS, 'line');
+    p.setAttribute('x1', previewSource.x);
+    p.setAttribute('y1', previewSource.y);
+    p.setAttribute('x2', mousePos.x);
+    p.setAttribute('y2', mousePos.y);
+    p.setAttribute('class', 'preview-line');
+    svg.appendChild(p);
+  }
+
+  graph.nodes.forEach(node => {
+    let fill = '#4a7bff';
+    if (viz.visited.has(node.id)) fill = '#4ecdc4';
+    else if (viz.frontier.has(node.id)) fill = '#7209b7';
+    if (viz.current === node.id) fill = '#ffd166';
+
+    const circle = document.createElementNS(NS, 'circle');
+    circle.setAttribute('cx', node.x);
+    circle.setAttribute('cy', node.y);
+    circle.setAttribute('r', NODE_R);
+    circle.setAttribute('fill', fill);
+    circle.setAttribute('stroke', viz.current === node.id ? '#ffb703' : '#6ab7ff');
+    circle.setAttribute('stroke-width', viz.current === node.id ? '3' : '2');
+    circle.setAttribute('class', 'node'
+      + (viz.current === node.id ? ' current' : '')
+      + (selectedNodeId === node.id ? ' selected' : ''));
+    circle.dataset.nodeId = node.id;
+    svg.appendChild(circle);
+
+    const text = document.createElementNS(NS, 'text');
+    text.setAttribute('x', node.x);
+    text.setAttribute('y', node.y + 6);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('fill', viz.current === node.id ? '#1a1205' : '#ffffff');
+    text.setAttribute('font-weight', '800');
+    text.setAttribute('font-size', '16');
+    text.setAttribute('font-family', 'Segoe UI, sans-serif');
+    text.setAttribute('pointer-events', 'none');
+    text.textContent = node.id;
+    svg.appendChild(text);
+  });
+}
+
+/* =========================================================================
+   MOUSE INTERACTION
+   ========================================================================= */
+svg.addEventListener('mousedown', onSvgMouseDown);
+svg.addEventListener('click', onSvgClick);
+svg.addEventListener('dblclick', onSvgDblClick);
+document.addEventListener('mousemove', onDocMouseMove);
+document.addEventListener('mouseup', onDocMouseUp);
+document.addEventListener('keydown', onKeyDown);
+document.addEventListener('keyup', onKeyUp);
+
+/* ---------------- PANNING ---------------- */
+canvasScroll.addEventListener('mousedown', (ev) => {
+  let shouldPan = (mode === 'pan') || spaceDown || (ev.button === 1);
+
+  if (!shouldPan && ev.button === 0 && (mode === 'select' || mode === 'delete')) {
+    const onNode = ev.target.closest && ev.target.closest('[data-node-id]');
+    const onEdge = ev.target.closest && ev.target.closest('[data-edge-id]');
+    const onHandle = ev.target.closest && ev.target.closest('.resize-handle');
+    if (!onNode && !onEdge && !onHandle) shouldPan = true;
+  }
+
+  if (!shouldPan) return;
+  ev.preventDefault();
+
+  isPanning = true;
+  panMoved = false;
+  panStart = {
+    x: ev.clientX,
+    y: ev.clientY,
+    scrollLeft: canvasScroll.scrollLeft,
+    scrollTop:  canvasScroll.scrollTop
+  };
+  canvasScroll.classList.add('panning');
+});
+
+window.addEventListener('mousemove', (ev) => {
+  if (!isPanning) return;
+  const dx = ev.clientX - panStart.x;
+  const dy = ev.clientY - panStart.y;
+  if (Math.abs(dx) > 2 || Math.abs(dy) > 2) panMoved = true;
+  canvasScroll.scrollLeft = panStart.scrollLeft - dx;
+  canvasScroll.scrollTop  = panStart.scrollTop  - dy;
+});
+
+window.addEventListener('mouseup', () => {
+  if (!isPanning) return;
+  isPanning = false;
+  canvasScroll.classList.remove('panning');
+  if (panMoved) {
+    suppressNextSvgClick = true;
+    setTimeout(() => { suppressNextSvgClick = false; }, 60);
+  }
+});
+
+/* ---------------- WHEEL = ZOOM (snappy, centred on cursor) ---------------- */
+canvasScroll.addEventListener('wheel', (ev) => {
+  ev.preventDefault();
+
+  const rect = canvasScroll.getBoundingClientRect();
+  const mx = ev.clientX - rect.left;
+  const my = ev.clientY - rect.top;
+
+  const oldW = canvasW * zoom;
+  const oldH = canvasH * zoom;
+  const rx = (canvasScroll.scrollLeft + mx) / oldW;
+  const ry = (canvasScroll.scrollTop  + my) / oldH;
+
+  /* Snappier step */
+  if (ev.deltaY < 0) zoom = Math.min(2.5, +(zoom + 0.2).toFixed(2));
+  else                zoom = Math.max(0.5, +(zoom - 0.2).toFixed(2));
+
+  applyZoomUI();
+
+  const newW = canvasW * zoom;
+  const newH = canvasH * zoom;
+  canvasScroll.scrollLeft = rx * newW - mx;
+  canvasScroll.scrollTop  = ry * newH - my;
+}, { passive: false });
+
+/* ---------------- CANVAS RESIZE HANDLES ---------------- */
+document.querySelectorAll('.resize-handle').forEach(h => {
+  h.addEventListener('mousedown', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    resizeState = {
+      dir: h.dataset.resize,
+      startX: ev.clientX,
+      startY: ev.clientY,
+      startW: canvasW,
+      startH: canvasH
+    };
+    document.body.classList.add('resizing');
+    if (h.dataset.resize === 'w') document.body.style.cursor = 'ew-resize';
+    else if (h.dataset.resize === 'h') document.body.style.cursor = 'ns-resize';
+    else document.body.style.cursor = 'nwse-resize';
+  });
+});
+
+window.addEventListener('mousemove', (ev) => {
+  if (!resizeState) return;
+  const dx = (ev.clientX - resizeState.startX) / zoom;
+  const dy = (ev.clientY - resizeState.startY) / zoom;
+
+  if (resizeState.dir === 'w' || resizeState.dir === 'both') {
+    canvasW = Math.max(400, Math.min(4000, Math.round(resizeState.startW + dx)));
+  }
+  if (resizeState.dir === 'h' || resizeState.dir === 'both') {
+    canvasH = Math.max(300, Math.min(3000, Math.round(resizeState.startH + dy)));
+  }
+  updateSizeUI();
+  renderGraph();
+});
+
+window.addEventListener('mouseup', () => {
+  if (!resizeState) return;
+  resizeState = null;
+  document.body.classList.remove('resizing');
+  document.body.style.cursor = '';
+});
+
+/* ---------------- TOUCH: PINCH + 2-FINGER PAN ---------------- */
+canvasScroll.addEventListener('touchstart', (ev) => {
+  if (ev.touches.length === 2) {
+    ev.preventDefault();
+    const [t1, t2] = ev.touches;
+    touchState = {
+      dist: Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY),
+      midX: (t1.clientX + t2.clientX) / 2,
+      midY: (t1.clientY + t2.clientY) / 2,
+      zoom,
+      scrollLeft: canvasScroll.scrollLeft,
+      scrollTop: canvasScroll.scrollTop,
+      moved: false
+    };
+  }
+}, { passive: false });
+
+canvasScroll.addEventListener('touchmove', (ev) => {
+  if (ev.touches.length === 2 && touchState) {
+    ev.preventDefault();
+    const [t1, t2] = ev.touches;
+    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    const midX = (t1.clientX + t2.clientX) / 2;
+    const midY = (t1.clientY + t2.clientY) / 2;
+
+    touchState.moved = true;
+
+    const scale = dist / touchState.dist;
+    let newZoom = touchState.zoom * scale;
+    newZoom = Math.max(0.5, Math.min(2.5, +newZoom.toFixed(2)));
+
+    const rect = canvasScroll.getBoundingClientRect();
+    const m1x = touchState.midX - rect.left;
+    const m1y = touchState.midY - rect.top;
+    const m2x = midX - rect.left;
+    const m2y = midY - rect.top;
+
+    const oldW = canvasW * touchState.zoom;
+    const oldH = canvasH * touchState.zoom;
+    const rx = (touchState.scrollLeft + m1x) / oldW;
+    const ry = (touchState.scrollTop  + m1y) / oldH;
+
+    zoom = newZoom;
+    applyZoomUI();
+
+    const newW = canvasW * zoom;
+    const newH = canvasH * zoom;
+    canvasScroll.scrollLeft = rx * newW - m2x;
+    canvasScroll.scrollTop  = ry * newH - m2y;
+  }
+}, { passive: false });
+
+canvasScroll.addEventListener('touchend', (ev) => {
+  if (ev.touches.length < 2) {
+    if (touchState && touchState.moved) {
+      suppressNextSvgClick = true;
+      setTimeout(() => { suppressNextSvgClick = false; }, 60);
+    }
+    touchState = null;
+  }
+}, { passive: true });
+
+/* ---------------- SVG handlers ---------------- */
+function onSvgMouseDown(ev) {
+  if (mode === 'pan' || spaceDown || ev.button === 1) return;
+  if (ev.button !== 0) return;
+
+  suppressClick = false;
+  didDrag = false;
+
+  const pt = getPoint(ev);
+  const node = nodeAt(pt.x, pt.y);
+  if (!node) return;
+
+  if (ev.shiftKey) {
+    isDrawingEdge = true;
+    edgeDrawSource = node;
+    mousePos = pt;
+    ev.preventDefault();
+    renderGraph();
+    return;
+  }
+
+  if (mode === 'select' || mode === 'delete') {
+    isDragging = true;
+    draggingNode = node;
+    dragOffset = { x: node.x - pt.x, y: node.y - pt.y };
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+}
+
+function onDocMouseMove(ev) {
+  if (!isDragging && !isDrawingEdge && !pendingEdgeFrom) return;
+  const pt = getPoint(ev);
+
+  if (isDragging && draggingNode) {
+    let nx = pt.x + dragOffset.x;
+    let ny = pt.y + dragOffset.y;
+
+    /* Lower clamp only — left/top edge */
+    nx = Math.max(NODE_R, nx);
+    ny = Math.max(NODE_R, ny);
+
+    /* Auto-expand the logical canvas if dragged past right / bottom */
+    const margin = 120;
+    if (nx > canvasW - NODE_R) {
+      canvasW = Math.ceil(nx + NODE_R + margin);
+      updateSizeUI();
+    }
+    if (ny > canvasH - NODE_R) {
+      canvasH = Math.ceil(ny + NODE_R + margin);
+      updateSizeUI();
+    }
+
+    if (Math.hypot(nx - draggingNode.x, ny - draggingNode.y) > 3) didDrag = true;
+    draggingNode.x = nx;
+    draggingNode.y = ny;
+    renderGraph();
+    return;
+  }
+
+  if (isDrawingEdge || pendingEdgeFrom) {
+    mousePos = pt;
+    renderGraph();
+  }
+}
+
+function onDocMouseUp(ev) {
+  if (isDragging) {
+    isDragging = false;
+    draggingNode = null;
+    return;
+  }
+  if (isDrawingEdge) {
+    const pt = getPoint(ev);
+    const target = nodeAt(pt.x, pt.y);
+    if (target && target !== edgeDrawSource) createEdge(edgeDrawSource, target);
+    isDrawingEdge = false;
+    edgeDrawSource = null;
+    mousePos = null;
+    suppressClick = true;
+    setTimeout(() => { suppressClick = false; }, 60);
+    renderGraph();
+  }
+}
+
+function onSvgClick(ev) {
+  if (suppressClick || didDrag || suppressNextSvgClick) {
+    didDrag = false;
+    return;
+  }
+
+  const pt = getPoint(ev);
+  const node = nodeAt(pt.x, pt.y);
+  if (node) { handleNodeClick(node); return; }
+
+  const edgeEl = ev.target.closest ? ev.target.closest('[data-edge-id]') : null;
+  if (edgeEl) { handleEdgeClick(edgeEl.dataset.edgeId); return; }
+
+  handleCanvasClick(pt);
+}
+
+function onSvgDblClick(ev) {
+  const pt = getPoint(ev);
+  const node = nodeAt(pt.x, pt.y);
+  if (!node) return;
+  const name = prompt('Rename node:', node.id);
+  if (name === null) return;
+  const clean = name.trim().toUpperCase().slice(0, 6);
+  if (!clean) return;
+  if (graph.nodes.some(n => n.id === clean && n !== node)) {
+    toast('That name is already used.'); return;
+  }
+  const old = node.id;
+  graph.edges.forEach(e => {
+    if (e.source === old) e.source = clean;
+    if (e.target === old) e.target = clean;
+  });
+  node.id = clean;
+  if (selectedNodeId === old) selectedNodeId = clean;
+  if ($('startNode').value.toUpperCase() === old) $('startNode').value = clean;
+  clearTraversal();
+  renderGraph();
+  addLog(`Renamed node ${old} → ${clean}`, 'edit');
+}
+
+function handleNodeClick(node) {
+  switch (mode) {
+    case 'addEdge':
+      if (!pendingEdgeFrom) {
+        pendingEdgeFrom = node.id;
+        toast(`Edge start: ${node.id} — now click the target node`);
+      } else if (pendingEdgeFrom === node.id) {
+        pendingEdgeFrom = null;
+        toast('Edge creation cancelled');
+      } else {
+        createEdge(getNode(pendingEdgeFrom), node);
+        pendingEdgeFrom = null;
+      }
+      renderGraph();
+      break;
+    case 'delete':
+      deleteNode(node.id);
+      break;
+    case 'pan':
+      break;
+    default:
+      selectedNodeId = node.id;
+      selectedEdgeId = null;
+      $('startNode').value = node.id;
+      renderGraph();
+      break;
+  }
+}
+
+function handleEdgeClick(edgeId) {
+  if (mode === 'delete') deleteEdge(edgeId);
+  else if (mode !== 'pan') { selectedEdgeId = edgeId; selectedNodeId = null; renderGraph(); }
+}
+
+function handleCanvasClick(pt) {
+  if (mode === 'addNode') addNodeAt(pt.x, pt.y);
+  else if (mode === 'addEdge') {
+    if (pendingEdgeFrom) { pendingEdgeFrom = null; toast('Edge creation cancelled'); }
+    renderGraph();
+  } else if (mode === 'pan') {
+    /* nothing */
+  } else {
+    selectedNodeId = null;
+    selectedEdgeId = null;
+    renderGraph();
+  }
+}
+
+/* =========================================================================
+   GRAPH EDITING
+   ========================================================================= */
+function addNodeAt(x, y) {
+  const id = nextNodeId();
+  const cx = Math.max(NODE_R, x);
+  const cy = Math.max(NODE_R, y);
+  graph.nodes.push({ id, x: cx, y: cy });
+  clearTraversal();
+  renderGraph();
+  addLog(`Created node ${id}`, 'edit');
+  $('startNode').value = id;
+}
+
+function createEdge(sourceNode, targetNode) {
+  if (!sourceNode || !targetNode) return;
+  if (sourceNode.id === targetNode.id) { toast('Self-loops are not supported.'); return; }
+  const exists = graph.edges.some(e =>
+    (e.source === sourceNode.id && e.target === targetNode.id) ||
+    (!e.directed && e.source === targetNode.id && e.target === sourceNode.id)
+  );
+  if (exists) { toast(`An edge between ${sourceNode.id} and ${targetNode.id} already exists.`); return; }
+
+  graph.edges.push(makeEdge(sourceNode.id, targetNode.id, directedMode));
+  clearTraversal();
+  renderGraph();
+  addLog(`Created ${directedMode ? 'directed' : 'undirected'} edge ${sourceNode.id} → ${targetNode.id}`, 'edit');
+}
+
+function deleteNode(id) {
+  graph.nodes = graph.nodes.filter(n => n.id !== id);
+  graph.edges = graph.edges.filter(e => e.source !== id && e.target !== id);
+  if (selectedNodeId === id) selectedNodeId = null;
+  clearTraversal();
+  renderGraph();
+  addLog(`Deleted node ${id} and its edges`, 'edit');
+}
+
+function deleteEdge(id) {
+  const e = graph.edges.find(x => x.id === id);
+  graph.edges = graph.edges.filter(x => x.id !== id);
+  if (selectedEdgeId === id) selectedEdgeId = null;
+  clearTraversal();
+  renderGraph();
+  if (e) addLog(`Deleted edge ${e.source} → ${e.target}`, 'edit');
+}
+
+function toggleDirectedMode() {
+  directedMode = !directedMode;
+  $('directedModeStatus').textContent = directedMode ? 'ON' : 'OFF';
+  addLog(`Directed mode ${directedMode ? 'enabled' : 'disabled'} (applies to new edges)`, 'edit');
+}
+
+/* =========================================================================
+   MODE BUTTONS
+   ========================================================================= */
+const MODE_HINTS = {
+  select: 'Click a node to select it & set it as the start node · Drag nodes to reposition (canvas auto-expands) · Drag empty space to pan the view · Shift+drag between two nodes to connect them · Double-click a node to rename it',
+  addNode: 'Click anywhere on the empty canvas to create a new node. New nodes are added to the existing graph.',
+  addEdge: 'Click the SOURCE node, then click the TARGET node. (Shift+drag also works.)',
+  delete: 'Click a node or an edge to delete it.',
+  pan: 'Drag anywhere to move the canvas around. Wheel to zoom. Great for large graphs.'
+};
+
+function applyModeUI() {
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  canvasScroll.classList.toggle('pan-mode', mode === 'pan');
+  $('hintBar').innerHTML = '<i class="fas fa-circle-info"></i> ' + MODE_HINTS[mode];
+}
+
+document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    mode = btn.dataset.mode;
+    pendingEdgeFrom = null;
+    applyModeUI();
+    renderGraph();
+  });
+});
+
+/* =========================================================================
+   CANVAS SIZE + ZOOM CONTROLS
+   ========================================================================= */
+$('widthSlider').addEventListener('input', function () {
+  canvasW = parseInt(this.value, 10);
+  $('widthValue').textContent = canvasW + 'px';
+  renderGraph();
+});
+
+$('heightSlider').addEventListener('input', function () {
+  canvasH = parseInt(this.value, 10);
+  $('heightValue').textContent = canvasH + 'px';
+  renderGraph();
+});
+
+$('zoomSlider').addEventListener('input', function () {
+  zoom = parseInt(this.value, 10) / 100;
+  applyZoomUI();
+});
+
+function zoomIn()  { zoom = Math.min(2.5, +(zoom + 0.25).toFixed(2)); applyZoomUI(); }
+function zoomOut() { zoom = Math.max(0.5, +(zoom - 0.25).toFixed(2)); applyZoomUI(); }
+
+/* Resets zoom to 100% but keeps the canvas / graph as-is */
+function resetView() {
+  zoom = 1;
+  applyZoomUI();
+  toast('Zoom reset to 100%');
+}
+
+/* Fit the whole graph into the viewport */
+function fitToView() {
+  if (!graph.nodes.length) { resetView(); return; }
+  let maxX = 400, maxY = 300, minX = Infinity, minY = Infinity;
+  graph.nodes.forEach(n => {
+    maxX = Math.max(maxX, n.x + NODE_R + 80);
+    maxY = Math.max(maxY, n.y + NODE_R + 80);
+    minX = Math.min(minX, n.x - NODE_R - 80);
+    minY = Math.min(minY, n.y - NODE_R - 80);
+  });
+  canvasW = Math.max(400, Math.ceil(maxX - Math.min(0, minX)));
+  canvasH = Math.max(300, Math.ceil(maxY - Math.min(0, minY)));
+  updateSizeUI();
+  zoom = 1;
+  applyZoomUI();
+  canvasScroll.scrollLeft = 0;
+  canvasScroll.scrollTop  = 0;
+  toast('Fitted graph to view');
+}
+
+function applyZoomUI() {
+  const pct = Math.round(zoom * 100);
+  $('zoomSlider').value = pct;
+  $('zoomValue').textContent = pct + '%';
+  $('zoomDisplay').textContent = pct + '%';
+  renderGraph();
+}
+
+$('speedControl').addEventListener('input', function () {
+  $('speedValue').textContent = this.value + 'ms';
+});
+
+/* =========================================================================
+   STEP ENGINE (BFS / DFS)
+   ========================================================================= */
+function snap(o) {
+  const s = Object.assign({
+    dsItems: [], visitedOrder: [], treeEdges: [], current: null,
+    added: [], removed: null, title: '', lines: [], phase: 'info'
+  }, o);
+  s.treeEdgeSet = new Set(s.treeEdges);
+  return s;
+}
+
+function buildBFSSteps(start) {
+  const steps = [];
+  const queue = [];
+  const discovered = new Set();
+  const order = [];
+  const treeEdges = [];
+
+  discovered.add(start);
+  queue.push(start);
+
+  steps.push(snap({
+    dsItems: [...queue], visitedOrder: [], treeEdges: [],
+    added: [start],
+    title: 'Initialize the queue',
+    lines: [
+      'BFS uses a <b>Queue</b> — First In, First Out (FIFO).',
+      `Mark <b>${start}</b> as discovered and <b>enqueue</b> it at the REAR.`,
+      `Queue = [${queue.join(', ')}] · Visited = {}`
+    ],
+    phase: 'init'
+  }));
+
+  while (queue.length) {
+    const cur = queue.shift();
+    order.push(cur);
+
+    steps.push(snap({
+      dsItems: [...queue], visitedOrder: [...order], treeEdges: [...treeEdges],
+      current: cur, removed: cur,
+      title: `Dequeue "${cur}" from the FRONT`,
+      lines: [
+        `Take the node at the <b>FRONT</b> of the queue → <b>${cur}</b>.`,
+        'Because the queue is FIFO, the <b>oldest</b> discovered node is processed first — BFS spreads out layer by layer.',
+        `Queue now = [${queue.join(', ') || 'empty'}]`
+      ],
+      phase: 'pop'
+    }));
+
+    const neighbors = [...new Set(getNeighbors(cur))];
+    const newlyAdded = [];
+    neighbors.forEach(n => {
+      if (!discovered.has(n)) {
+        discovered.add(n);
+        const e = findEdgeBetween(cur, n);
+        if (e) treeEdges.push(e.id);
+        queue.push(n);
+        newlyAdded.push(n);
+      }
+    });
+
+    steps.push(snap({
+      dsItems: [...queue], visitedOrder: [...order], treeEdges: [...treeEdges],
+      current: cur, added: newlyAdded,
+      title: newlyAdded.length
+        ? `Visit "${cur}" → enqueue ${newlyAdded.join(', ')}`
+        : `Visit "${cur}" → no new neighbours`,
+      lines: newlyAdded.length ? [
+        `Mark <b>${cur}</b> as <b>visited</b>. Visited order: ${order.join(' → ')}`,
+        `Neighbours of ${cur}: ${neighbors.length ? neighbors.join(', ') : 'none'}.`,
+        `Not yet discovered: <b>${newlyAdded.join(', ')}</b> → <b>enqueue</b> each at the REAR.`,
+        `Queue = [${queue.join(', ')}]`
+      ] : [
+        `Mark <b>${cur}</b> as <b>visited</b>. Visited order: ${order.join(' → ')}`,
+        `Neighbours of ${cur}: ${neighbors.length ? neighbors.join(', ') : 'none'} — all already discovered.`,
+        `Nothing new to enqueue. Queue = [${queue.join(', ') || 'empty'}]`
+      ],
+      phase: 'push'
+    }));
+  }
+
+  steps.push(snap({
+    dsItems: [], visitedOrder: [...order], treeEdges: [...treeEdges],
+    title: 'BFS complete 🎉',
+    lines: [
+      'The queue is empty → every reachable node has been processed.',
+      `BFS visit order: <b>${order.join(' → ')}</b>`,
+      `The gold edges form the <b>BFS tree</b> — the shortest-path tree from ${start}.`
+    ],
+    phase: 'done'
+  }));
+
+  return steps;
+}
+
+function buildDFSSteps(start) {
+  const steps = [];
+  const stack = [];
+  const discovered = new Set();
+  const order = [];
+  const treeEdges = [];
+
+  discovered.add(start);
+  stack.push(start);
+
+  steps.push(snap({
+    dsItems: [...stack], visitedOrder: [], treeEdges: [],
+    added: [start],
+    title: 'Initialize the stack',
+    lines: [
+      'DFS uses a <b>Stack</b> — Last In, First Out (LIFO).',
+      `Push the start node <b>${start}</b> onto the stack.`,
+      `Stack (bottom → top) = [${stack.join(', ')}]`
+    ],
+    phase: 'init'
+  }));
+
+  while (stack.length) {
+    const cur = stack.pop();
+    order.push(cur);
+
+    steps.push(snap({
+      dsItems: [...stack], visitedOrder: [...order], treeEdges: [...treeEdges],
+      current: cur, removed: cur,
+      title: `Pop "${cur}" from the TOP`,
+      lines: [
+        `Remove the node at the <b>TOP</b> of the stack → <b>${cur}</b>.`,
+        'Because the stack is LIFO, the <b>most recently pushed</b> node is explored first — DFS dives deep before backtracking.',
+        `Stack now = [${stack.join(', ') || 'empty'}]${stack.length ? ` (top = ${stack[stack.length - 1]})` : ''}`
+      ],
+      phase: 'pop'
+    }));
+
+    const neighbors = [...new Set(getNeighbors(cur))].filter(n => !discovered.has(n));
+    const toPush = neighbors.slice().reverse();
+
+    toPush.forEach(n => {
+      discovered.add(n);
+      const e = findEdgeBetween(cur, n);
+      if (e) treeEdges.push(e.id);
+      stack.push(n);
+    });
+
+    steps.push(snap({
+      dsItems: [...stack], visitedOrder: [...order], treeEdges: [...treeEdges],
+      current: cur, added: toPush,
+      title: toPush.length
+        ? `Visit "${cur}" → push ${toPush.join(', ')}`
+        : `Visit "${cur}" → dead end, backtrack`,
+      lines: toPush.length ? [
+        `Mark <b>${cur}</b> as <b>visited</b>. Visited order: ${order.join(' → ')}`,
+        `Undiscovered neighbours of ${cur}: <b>${neighbors.join(', ')}</b>.`,
+        'Push them onto the stack (reversed, so the first neighbour ends up on TOP).',
+        `Stack = [${stack.join(', ')}] · top = ${stack[stack.length - 1]}`
+      ] : [
+        `Mark <b>${cur}</b> as <b>visited</b>. Visited order: ${order.join(' → ')}`,
+        `All neighbours of ${cur} are already discovered — this is a <b>dead end</b>.`,
+        `Backtrack: the next node is popped from the top of the stack. Stack = [${stack.join(', ') || 'empty'}]`
+      ],
+      phase: 'push'
+    }));
+  }
+
+  steps.push(snap({
+    dsItems: [], visitedOrder: [...order], treeEdges: [...treeEdges],
+    title: 'DFS complete 🎉',
+    lines: [
+      'The stack is empty — DFS has backtracked out of every branch.',
+      `DFS visit order: <b>${order.join(' → ')}</b>`,
+      'The gold edges form the <b>DFS tree</b>.'
+    ],
+    phase: 'done'
+  }));
+
+  return steps;
+}
+
+/* =========================================================================
+   PLAYER
+   ========================================================================= */
+function startTraversal(type) {
+  const startId = $('startNode').value.trim().toUpperCase();
+  if (!startId) { toast('Please enter a start node.'); return; }
+  if (!getNode(startId)) {
+    toast(`Node "${startId}" does not exist in the graph.`);
+    addLog(`Start node "${startId}" not found.`, 'error');
+    return;
+  }
+
+  player.type = type;
+  player.steps = (type === 'bfs') ? buildBFSSteps(startId) : buildDFSSteps(startId);
+  player.index = -1;
+  player.playing = false;
+  clearTimeout(player.timer);
+
+  viz.visited.clear();
+  viz.frontier.clear();
+  viz.treeEdges.clear();
+  viz.current = null;
+
+  $('logOutput').innerHTML = '';
+  const badge = $('algoBadge');
+  badge.textContent = type.toUpperCase();
+  badge.className = 'algo-badge ' + type;
+
+  $('queueBox').classList.toggle('active', type === 'bfs');
+  $('stackBox').classList.toggle('active', type === 'dfs');
+
+  goToStep(0);
+  play();
+}
+
+function goToStep(i) {
+  if (!player.steps.length) return;
+  i = Math.max(0, Math.min(i, player.steps.length - 1));
+  player.index = i;
+
+  const s = player.steps[i];
+  viz.visited = new Set(s.visitedOrder);
+  viz.frontier = new Set(s.dsItems);
+  viz.current = s.current;
+  viz.treeEdges = new Set(s.treeEdges);
+
+  renderGraph();
+  renderExplanation(s, i);
+  renderQueuePanel(s);
+  renderStackPanel(s);
+  renderLog(i);
+  updateButtons();
+}
+
+function play() {
+  if (!player.steps.length) return;
+  if (player.index >= player.steps.length - 1) goToStep(0);
+  player.playing = true;
+  updateButtons();
+  tick();
+}
+function tick() {
+  if (!player.playing) return;
+  if (player.index >= player.steps.length - 1) {
+    player.playing = false;
+    updateButtons();
+    return;
+  }
+  goToStep(player.index + 1);
+  player.timer = setTimeout(tick, parseInt($('speedControl').value, 10));
+}
+function pause() {
+  player.playing = false;
+  clearTimeout(player.timer);
+  updateButtons();
+}
+function togglePlay() {
+  if (!player.steps.length) { toast('Run BFS or DFS first.'); return; }
+  if (player.playing) pause(); else play();
+}
+function stepForward() {
+  if (!player.steps.length) { toast('Run BFS or DFS first.'); return; }
+  pause();
+  if (player.index < player.steps.length - 1) goToStep(player.index + 1);
+}
+function stepBack() {
+  if (!player.steps.length) { toast('Run BFS or DFS first.'); return; }
+  pause();
+  if (player.index > 0) goToStep(player.index - 1);
+}
+function updateButtons() {
+  const has = player.steps.length > 0;
+  $('btnPrev').disabled = !has;
+  $('btnNext').disabled = !has;
+  $('btnPlay').disabled = !has;
+  const icon = player.playing ? 'fa-pause' : 'fa-play';
+  const label = player.playing ? 'Pause' : 'Play';
+  $('btnPlay').innerHTML = `<i class="fas ${icon}"></i> ${label}`;
+}
+
+/* =========================================================================
+   PANEL RENDERING
+   ========================================================================= */
+function renderExplanation(s, i) {
+  $('stepBadge').textContent = `Step ${i + 1} / ${player.steps.length}`;
+  $('stepTitle').innerHTML = s.title;
+  $('stepLines').innerHTML = s.lines.map(l => `<li>${l}</li>`).join('');
+
+  const chips = $('visitedChips');
+  if (s.visitedOrder.length) {
+    chips.innerHTML = s.visitedOrder
+      .map(v => `<span class="chip">${v}</span>`)
+      .join('<span class="chip-arrow">→</span>');
+  } else {
+    chips.innerHTML = '<span class="muted">none yet</span>';
+  }
+  $('progressFill').style.width = ((i + 1) / player.steps.length * 100) + '%';
+}
+
+function renderQueuePanel(s) {
+  const active = player.type === 'bfs';
+  const out = $('queueOutput');
+  const op = $('queueOp');
+  out.innerHTML = '';
+
+  if (!active) {
+    out.innerHTML = '<div class="ds-empty">Only used by BFS</div>';
+    op.className = 'ds-op'; op.innerHTML = '';
+    return;
+  }
+  if (!s.dsItems.length) {
+    out.innerHTML = '<div class="ds-empty">queue is empty</div>';
+  } else {
+    s.dsItems.forEach((id, idx) => {
+      const d = document.createElement('div');
+      d.className = 'ds-item';
+      if (idx === 0) d.classList.add('front');
+      else if (idx === s.dsItems.length - 1) d.classList.add('rear');
+      if (s.added.includes(id)) d.classList.add('entering');
+      d.innerHTML = `${id}<span class="ord">${idx + 1}</span>`;
+      out.appendChild(d);
+    });
+  }
+  if (s.removed) {
+    op.className = 'ds-op out';
+    op.innerHTML = `<i class="fas fa-arrow-left"></i> DEQUEUE "${s.removed}" from FRONT`;
+  } else if (s.added.length) {
+    op.className = 'ds-op in';
+    op.innerHTML = `<i class="fas fa-arrow-right"></i> ENQUEUE "${s.added.join(', ')}" at REAR`;
+  } else {
+    op.className = 'ds-op'; op.innerHTML = '';
+  }
+}
+
+function renderStackPanel(s) {
+  const active = player.type === 'dfs';
+  const out = $('stackOutput');
+  const op = $('stackOp');
+  out.innerHTML = '';
+
+  if (!active) {
+    out.innerHTML = '<div class="ds-empty">Only used by DFS</div>';
+    op.className = 'ds-op'; op.innerHTML = '';
+    return;
+  }
+  if (!s.dsItems.length) {
+    out.innerHTML = '<div class="ds-empty">stack is empty</div>';
+  } else {
+    const total = s.dsItems.length;
+    [...s.dsItems].reverse().forEach((id, idx) => {
+      const d = document.createElement('div');
+      d.className = 'ds-item';
+      if (idx === 0) d.classList.add('top');
+      if (s.added.includes(id)) d.classList.add('entering');
+      d.innerHTML = `${id}<span class="ord">${total - idx}</span>`;
+      out.appendChild(d);
+    });
+  }
+  if (s.removed) {
+    op.className = 'ds-op out';
+    op.innerHTML = `<i class="fas fa-arrow-up"></i> POP "${s.removed}" from TOP`;
+  } else if (s.added.length) {
+    op.className = 'ds-op in';
+    op.innerHTML = `<i class="fas fa-arrow-down"></i> PUSH "${s.added.join(', ')}" onto TOP`;
+  } else {
+    op.className = 'ds-op'; op.innerHTML = '';
+  }
+}
+
+function renderLog(upto) {
+  const log = $('logOutput');
+  log.innerHTML = '';
+  for (let k = 0; k <= upto; k++) {
+    const s = player.steps[k];
+    const div = document.createElement('div');
+    div.className = 'log-entry ' + (s.phase || 'info');
+    div.innerHTML = `<span class="log-num">${k + 1}</span> <b>${s.title}</b>`;
+    log.appendChild(div);
+  }
+  log.scrollTop = log.scrollHeight;
+}
+
+function addLog(message, kind = 'edit') {
+  const log = $('logOutput');
+  const div = document.createElement('div');
+  div.className = 'log-entry ' + kind;
+  div.innerHTML = `<i class="fas fa-pen"></i> ${message}`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+/* =========================================================================
+   CLEAR TRAVERSAL
+   ========================================================================= */
+function clearTraversal() {
+  pause();
+  player.steps = [];
+  player.index = -1;
+  player.type = null;
+
+  viz.visited.clear();
+  viz.frontier.clear();
+  viz.treeEdges.clear();
+  viz.current = null;
+
+  $('stepBadge').textContent = 'Step 0 / 0';
+  $('algoBadge').textContent = '—';
+  $('algoBadge').className = 'algo-badge';
+  $('stepTitle').textContent = 'Ready';
+  $('stepLines').innerHTML =
+    '<li>Choose a start node, then press <b>Run BFS</b> or <b>Run DFS</b>.</li>' +
+    '<li>The matching data structure (queue for BFS, stack for DFS) will light up right below.</li>' +
+    '<li>Use <b>Play / Prev / Next</b> to move through the algorithm at your own pace.</li>';
+  $('visitedChips').innerHTML = '<span class="muted">none yet</span>';
+  $('progressFill').style.width = '0%';
+
+  $('queueOutput').innerHTML = '<div class="ds-empty">—</div>';
+  $('stackOutput').innerHTML = '<div class="ds-empty">—</div>';
+  $('queueOp').className = 'ds-op'; $('queueOp').innerHTML = '';
+  $('stackOp').className = 'ds-op'; $('stackOp').innerHTML = '';
+  $('queueBox').classList.remove('active');
+  $('stackBox').classList.remove('active');
+
+  updateButtons();
+}
+
+/* =========================================================================
+   KEYBOARD
+   ========================================================================= */
+function onKeyDown(e) {
+  if (e.target.tagName === 'INPUT') return;
+
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (!spaceDown) {
+      spaceDown = true;
+      if (mode !== 'pan') canvasScroll.classList.add('space-ready');
+    }
+    return;
+  }
+
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (selectedNodeId) { deleteNode(selectedNodeId); e.preventDefault(); }
+    else if (selectedEdgeId) { deleteEdge(selectedEdgeId); e.preventDefault(); }
+  }
+
+  if (e.key === 'Escape') {
+    isDrawingEdge = false;
+    isDragging = false;
+    edgeDrawSource = null;
+    draggingNode = null;
+    pendingEdgeFrom = null;
+    mousePos = null;
+    selectedNodeId = null;
+    selectedEdgeId = null;
+    renderGraph();
+  }
+
+  if (e.key === 'ArrowRight' && player.steps.length) { e.preventDefault(); stepForward(); }
+  if (e.key === 'ArrowLeft'  && player.steps.length) { e.preventDefault(); stepBack(); }
+
+  if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomIn(); }
+  if (e.key === '-' || e.key === '_') { e.preventDefault(); zoomOut(); }
+  if (e.key === '0') { e.preventDefault(); fitToView(); }
+}
+
+function onKeyUp(e) {
+  if (e.code === 'Space') {
+    spaceDown = false;
+    if (mode !== 'pan') canvasScroll.classList.remove('space-ready');
+  }
+}
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+let toastTimer;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+loadDefaultGraph();
+applyModeUI();
+renderGraph();
+updateButtons();
+</script>
+</body>
+</html>
