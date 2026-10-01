@@ -2,17 +2,17 @@
 
 An interactive web application for visualizing **BFS and DFS** graph traversal step by step.
 
-## 🚀 Features
+## Features
 
-* Interactive graph editor
-* Add, delete, and drag nodes
-* Directed and undirected edges
-* BFS and DFS visualization
-* Play, pause, forward, and backward controls
-* Real-time Queue (BFS) and Stack (DFS) visualization
-* Step-by-step algorithm explanations
-* Zoom and pan controls
-* Prebuilt graph examples
+- **Interactive Graph Editor:** Add, delete, and drag nodes. Create directed or undirected edges.
+- **Weighted Graphs:** Assign weights to edges and edit them by double-clicking.
+- **Step-by-Step Visualization:** Play, pause, step forward, and step backward through the algorithm's execution.
+- **Data Structure Synchronization:** Watch the Queue (BFS), Stack (DFS), and Priority Queue (Dijkstra) update in real time alongside the graph canvas.
+- **Dynamic Explanations:** A step history panel explains *why* the algorithm makes a specific move, not just *what* it does.
+- **Distance Table:** Real-time tracking of tentative distances for shortest-path algorithms.
+- **Canvas Controls:** Smooth panning, zooming, and auto-expansion.
+
+## Supported Algorithms
 
 ## 🧠 Algorithms
 
@@ -21,13 +21,13 @@ An interactive web application for visualizing **BFS and DFS** graph traversal s
 | BFS       | O(V + E) | O(V)  |
 | DFS       | O(V + E) | O(V)  |
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-* HTML5
-* CSS3
-* Vanilla JavaScript (ES6 Modules)
-* SVG
-* Font Awesome
+- **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6 Modules), SVG, FontAwesome
+- **Backend:** Python, Django, Django REST Framework
+- **Database:** SQLite (development), PostgreSQL (production-ready)
+
+## Architecture
 
 ## 📁 Structure
 
@@ -47,7 +47,29 @@ graph-algorithm-visualizer/
 └── README.md
 ```
 
-## ⚙️ Setup
+## Installation & Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/graph-algorithm-visualizer.git
+   cd graph-algorithm-visualizer
+   ```
+
+2. **Create and activate a virtual environment**
+   ```bash
+   python -m venv venv
+
+   # Windows
+   venv\Scripts\activate
+
+   # macOS / Linux
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ```bash
 git clone https://github.com/your-username/graph-algorithm-visualizer.git
@@ -57,9 +79,7 @@ python -m http.server 8000
 
 Open:
 
-```text
-http://localhost:8000/
-```
+## Testing
 
 ## 🎮 Usage
 
@@ -69,7 +89,7 @@ http://localhost:8000/
 4. Run the visualization.
 5. Use playback controls to analyze each step.
 
-## 🔮 Future Improvements
+## Future Improvements
 
 * Dijkstra's Algorithm
 * A* Search
@@ -79,6 +99,4 @@ http://localhost:8000/
 * Backend integration
 * Deployment
 
-## 👩‍💻 Author
 
-**Ritika Kalia**
