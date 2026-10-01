@@ -1,38 +1,82 @@
 # Graph Algorithm Visualizer
 
-An interactive web application for visualizing **BFS and DFS** graph traversal step by step.
+An interactive web application for visualizing **BFS and DFS graph traversal algorithms step by step**.
+
+The visualizer allows users to create and modify graphs, run traversal algorithms, and understand each step through synchronized visualizations and explanations.
 
 ## Features
 
-- **Interactive Graph Editor:** Add, delete, and drag nodes. Create directed or undirected edges.
-- **Weighted Graphs:** Assign weights to edges and edit them by double-clicking.
-- **Step-by-Step Visualization:** Play, pause, step forward, and step backward through the algorithm's execution.
-- **Data Structure Synchronization:** Watch the Queue (BFS), Stack (DFS), and Priority Queue (Dijkstra) update in real time alongside the graph canvas.
-- **Dynamic Explanations:** A step history panel explains *why* the algorithm makes a specific move, not just *what* it does.
-- **Distance Table:** Real-time tracking of tentative distances for shortest-path algorithms.
-- **Canvas Controls:** Smooth panning, zooming, and auto-expansion.
+* **Interactive Graph Editor**
 
-## Supported Algorithms
+  * Add, delete, and drag nodes.
+  * Create directed or undirected edges.
+  * Edit graph structure interactively.
 
-## 🧠 Algorithms
+* **Weighted Graph Support**
 
-| Algorithm | Time     | Space |
-| --------- | -------- | ----- |
-| BFS       | O(V + E) | O(V)  |
-| DFS       | O(V + E) | O(V)  |
+  * Assign weights to edges.
+  * Edit edge weights by double-clicking.
+
+* **Step-by-Step Visualization**
+
+  * Play and pause algorithm execution.
+  * Move forward and backward through individual steps.
+  * Observe the traversal directly on the graph.
+
+* **Data Structure Visualization**
+
+  * View the **Queue** used by BFS.
+  * View the **Stack** used by DFS.
+  * Track data structure changes as the algorithm executes.
+
+* **Dynamic Explanations**
+
+  * Step history explains **why** each algorithmic action occurs, not just what happens.
+
+* **Graph Canvas Controls**
+
+  * Pan across the graph.
+  * Zoom in and out.
+  * Automatically expand the canvas when required.
+
+## Algorithms
+
+| Algorithm | Time Complexity | Space Complexity |
+| --------- | --------------- | ---------------- |
+| BFS       | O(V + E)        | O(V)             |
+| DFS       | O(V + E)        | O(V)             |
+
+Where:
+
+* `V` = Number of vertices
+* `E` = Number of edges
 
 ## Tech Stack
 
-- **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6 Modules), SVG, FontAwesome
-- **Backend:** Python, Django, Django REST Framework
-- **Database:** SQLite (development), PostgreSQL (production-ready)
+### Frontend
 
-## Architecture
+* HTML5
+* CSS3
+* JavaScript (ES6 Modules)
+* SVG
+* Font Awesome
 
-## 📁 Structure
+### Backend
+
+* Python
+* Django
+* Django REST Framework
+
+### Database
+
+* SQLite (development)
+* PostgreSQL (production-ready)
+
+## Project Structure
 
 ```text
 graph-algorithm-visualizer/
+│
 ├── static/
 │   └── visualizer/
 │       ├── css/
@@ -41,62 +85,97 @@ graph-algorithm-visualizer/
 │           ├── algorithms/
 │           ├── ui/
 │           └── main.js
+│
 ├── templates/
 │   └── visualizer/
 │       └── graph.html
+│
+├── manage.py
+├── requirements.txt
 └── README.md
 ```
 
 ## Installation & Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/graph-algorithm-visualizer.git
-   cd graph-algorithm-visualizer
-   ```
-
-2. **Create and activate a virtual environment**
-   ```bash
-   python -m venv venv
-
-   # Windows
-   venv\Scripts\activate
-
-   # macOS / Linux
-   source venv/bin/activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/your-username/graph-algorithm-visualizer.git
 cd graph-algorithm-visualizer
-python -m http.server 8000
 ```
 
-Open:
+### 2. Create a Virtual Environment
 
-## Testing
+```bash
+python -m venv venv
+```
 
-## 🎮 Usage
+### 3. Activate the Virtual Environment
 
-1. Create or load a graph.
-2. Select a starting node.
-3. Choose **BFS** or **DFS**.
-4. Run the visualization.
-5. Use playback controls to analyze each step.
+**Windows:**
+
+```bash
+venv\Scripts\activate
+```
+
+**macOS / Linux:**
+
+```bash
+source venv/bin/activate
+```
+
+### 4. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 5. Run the Django Development Server
+
+```bash
+python manage.py runserver
+```
+
+Open the application at:
+
+```text
+http://127.0.0.1:8000/
+```
+
+## Usage
+
+1. Create a graph using the graph editor.
+2. Add nodes and connect them with edges.
+3. Select a starting node.
+4. Choose **BFS** or **DFS**.
+5. Start the visualization.
+6. Use the playback controls to move through the algorithm step by step.
+7. Observe the graph, data structure, and explanation panel together.
+
+## Architecture
+
+The application separates the main functionality into independent modules:
+
+* **Core** — graph representation and canvas-related functionality.
+* **Algorithms** — BFS and DFS implementations.
+* **UI** — controls, visualization panels, and step history.
+* **Main** — application initialization and module coordination.
+
+This modular structure makes the visualizer easier to maintain and extend with additional graph algorithms.
 
 ## Future Improvements
 
 * Dijkstra's Algorithm
 * A* Search
-* Bellman-Ford
-* Prim's and Kruskal's Algorithms
-* Save/load graphs
-* Backend integration
-* Deployment
+* Bellman-Ford Algorithm
+* Prim's Algorithm
+* Kruskal's Algorithm
+* Save and load graphs
+* Algorithm comparison mode
+* Automated testing
+* Backend/API integration
+* Cloud deployment
 
+## License
 
+This project is intended for educational and portfolio purposes.
