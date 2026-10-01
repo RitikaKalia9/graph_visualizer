@@ -4,7 +4,7 @@ An interactive, full-stack web application that helps students and developers vi
 
 ![Project Demo](<INSERT_YOUR_GIF_OR_SCREENSHOT_LINK_HERE>)
 
-## 🚀 Features
+## Features
 
 - **Interactive Graph Editor:** Add, delete, and drag nodes. Create directed or undirected edges.
 - **Weighted Graphs:** Assign weights to edges and edit them by double-clicking.
@@ -14,7 +14,7 @@ An interactive, full-stack web application that helps students and developers vi
 - **Distance Table:** Real-time tracking of tentative distances for shortest-path algorithms.
 - **Canvas Controls:** Smooth panning, zooming, and auto-expansion.
 
-## 🧠 Supported Algorithms
+## Supported Algorithms
 
 | Category | Algorithm | Time Complexity | Space Complexity |
 |---|---|---|---|
@@ -24,13 +24,13 @@ An interactive, full-stack web application that helps students and developers vi
 
 *Upcoming: A\*, Bellman-Ford, Prim's, Kruskal's, Topological Sort*
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6 Modules), SVG, FontAwesome
 - **Backend:** Python, Django, Django REST Framework
 - **Database:** SQLite (development), PostgreSQL (production-ready)
 
-## 🏗️ Architecture
+## Architecture
 
 The project separates UI rendering from algorithm execution logic, keeping the codebase scalable and testable.
 
@@ -52,7 +52,7 @@ graph_visualizer/
 └── manage.py
 ```
 
-## ⚙️ Installation & Setup
+## Installation & Setup
 
 1. **Clone the repository**
    ```bash
@@ -95,7 +95,7 @@ graph_visualizer/
 3. **Run an algorithm:** Enter a start node (and a target node for Dijkstra), then click **Run BFS**, **Run DFS**, or **Run Dijkstra**.
 4. **Analyze:** Use the Play/Pause and Step buttons to watch the algorithm progress. The right panel shows the active data structure and a step-by-step explanation of the logic.
 
-## 🧪 Testing
+## Testing
 
 Run the backend test suite:
 
@@ -103,7 +103,7 @@ Run the backend test suite:
 python manage.py test
 ```
 
-## 🔮 Future Improvements
+## Future Improvements
 
 - [ ] Implement A\* Search and Bellman-Ford
 - [ ] Add Minimum Spanning Tree algorithms (Prim's and Kruskal's)
@@ -111,8 +111,4 @@ python manage.py test
 - [ ] Algorithm comparison dashboard (e.g., Dijkstra vs. A\*)
 - [ ] Deploy to production (Render/Railway + Vercel)
 
-## 👩‍💻 Author
 
-**[Your Name]**
-- GitHub: [@your-username](https://github.com/your-username)
-- LinkedIn: [Your LinkedIn Profile](https://linkedin.com/in/your-profile)
