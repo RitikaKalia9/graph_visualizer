@@ -1,2 +1,10 @@
+[project]
+name = "graph-visualizer"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "Django>=5.0,<6.0",
+]
+
 [tool.vercel]
 entrypoint = "graph_visualizer.wsgi:application"
