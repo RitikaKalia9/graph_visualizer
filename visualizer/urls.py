@@ -1,7 +1,0 @@
-from django.urls import path
-from . import views
-
-urlpatterns = [
-    path('', views.graph_view, name='graph_view'),
-    path('traverse/', views.traverse, name='traverse'),
-]
