@@ -1,5 +1,9 @@
 # Graph Algorithm Visualizer
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-000000?logo=vercel&logoColor=white)](https://graph-visualizer-mauve.vercel.app/)
+
+### 🔗 Live Demo: **[https://graph-visualizer-mauve.vercel.app/](https://graph-visualizer-mauve.vercel.app/)**
+
 An interactive web application for visualizing **BFS and DFS graph traversal algorithms step by step**.
 
 The visualizer allows users to create and modify graphs, run traversal algorithms, and understand each step through synchronized visualizations and explanations.
@@ -142,6 +146,10 @@ http://127.0.0.1:8000/
 ```
 
 ## Deploy to Vercel
+
+The app is live at **[https://graph-visualizer-mauve.vercel.app/](https://graph-visualizer-mauve.vercel.app/)**.
+
+To deploy your own copy:
 
 1. Push the project to a GitHub repository.
 2. Go to [vercel.com/new](https://vercel.com/new), import the repository and click **Deploy**. Vercel detects Django from `manage.py` automatically.
