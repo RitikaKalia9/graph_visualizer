@@ -1,0 +1,2 @@
+[tool.vercel]
+entrypoint = "graph_visualizer.wsgi:application"
